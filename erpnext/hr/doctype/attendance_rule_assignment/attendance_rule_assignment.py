@@ -32,7 +32,7 @@ class AttendanceRuleAssignment(Document):
 			frappe.throw(_("Attendance Rule is disabled"))
 
 
-def get_attendance_rule(employee, from_date, company=None, department=None, not_found_error=False):
+def get_attendance_rule(employee, from_date, company=None, department=None):
 	filters={
 		"employee": employee,
 		"from_date": ["<=", from_date],
@@ -44,8 +44,6 @@ def get_attendance_rule(employee, from_date, company=None, department=None, not_
 	attendance_rule = frappe.get_all("Attendance Rule", filters=filters, order_by="from_date desc")
 	if len(attendance_rule) > 0:
 		return attendance_rule[0].attendance_rule
-	elif not_found_error:
-		frappe.throw(_("Attendance rule not found for employee {0} from date {1}").format(employee, from_date))
 	else:
-		return None
+		frappe.throw(_("Attendance rule not found for employee {0} from date {1}").format(employee, from_date))
 
