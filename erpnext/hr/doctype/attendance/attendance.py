@@ -27,14 +27,14 @@ class Attendance(Document):
 		if leave_record:
 			for d in leave_record:
 				if d.half_day_date == getdate(self.attendance_date):
-					self.status = 'Half Day'
+					self.set_attendance_status("Half Day")
 					frappe.msgprint(_("Employee {0} on Half day on {1}").format(self.employee, self.attendance_date))
 				else:
-					self.status = 'On Leave'
+					self.set_attendance_status("On Leave")
 					self.leave_type = d.leave_type
 					frappe.msgprint(_("Employee {0} is on Leave on {1}").format(self.employee, self.attendance_date))
 
-		if self.status == "On Leave" and not leave_record:
+		if self.get_attendance_status() == "On Leave" and not leave_record:
 			frappe.throw(_("No leave record found for employee {0} for {1}").format(self.employee, self.attendance_date))
 
 	def validate_attendance_date(self):
@@ -53,10 +53,56 @@ class Attendance(Document):
 
 	def validate(self):
 		from erpnext.controllers.status_updater import validate_status
-		validate_status(self.status, ["Present", "Absent", "On Leave", "Half Day"])
+		validate_status(self.get_attendance_status(), ["Present", "Absent", "On Leave", "Half Day"])
 		self.validate_attendance_date()
 		self.validate_duplicate_record()
 		self.check_leave_record()
+		self.validate_status()
+		self.validate_attendance_status()
+
+	def get_attendance_status(self):
+		attendance_status = frappe.get_cached_value("Attendance Status", self.status, "attendance_status")
+		return attendance_status
+
+	def autostatus(self):
+		# TODO set status based on attendance rule
+		pass
+	
+	def set_attendance_status(self, attendance_status):
+		hr_settings = frappe.get_cached_doc("HR Settings")
+		if attendance_status == "Present":
+			if hr_settings.default_present_status:
+				self.status = hr_settings.default_present_status
+			else:
+				frappe.throw(_("Please set Default Present Status in HR Settings"))
+		elif attendance_status == "Half Day":
+			if hr_settings.default_half_day_status:
+				self.status = hr_settings.default_half_day_status
+			else:
+				frappe.throw(_("Please set Default Half Day Status in HR Settings"))
+		elif attendance_status == "On Leave":
+			if hr_settings.default_on_leave_status:
+				self.status = hr_settings.default_on_leave_status
+			else:
+				frappe.throw(_("Please set Default On Leave Status in HR Settings"))
+		elif attendance_status == "Absent":
+			if hr_settings.default_absent_status:
+				self.status = hr_settings.default_absent_status
+			else:
+				frappe.throw(_("Please set Default Absent Status in HR Settings"))
+		else:
+			frappe.throw(_("Invalid attendance status"))
+	
+	def validate_attendance_status(self):
+		attendance_status = frappe.get_cached_doc("Attendance Status", self.status)
+		if attendance_status.docstatus != 1:
+			frappe.throw(_("Attendance Status must be submitted"))
+		if attendance_status.disabled == 1:
+			frappe.throw(_("Attendance Status is disabled"))
+
+	def validate_status(self):
+		if not self.status:
+			frappe.throw(_("Status must not be empty"))
 
 @frappe.whitelist()
 def get_events(start, end, filters=None):
