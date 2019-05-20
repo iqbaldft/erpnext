@@ -18,7 +18,7 @@ class AttendanceRuleAssignment(Document):
 			"from_date": self.from_date,
 			"docstatus": 1
 		}
-		a_r_a = frappe.get_all("Attendance Rule Assginment", filters)
+		a_r_a = frappe.get_all("Attendance Rule Assignment", filters)
 		if a_r_a:
 			frappe.throw(_("Employee {0} already have assignment on {}").format(self.employee, self.from_date))
 
