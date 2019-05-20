@@ -195,6 +195,7 @@ def get_attendance_rule(employee, attendance_date):
 	filters = {
 		"employee": employee,
 		"from_date": ["<=", attendance_date],
+		"docstatus": 1
 	}
 	attendance_rule = frappe.get_all("Attendance Rule Assignment", filters=filters, fields=["name", "attendance_rule"], order_by="from_date desc", limit_page_length=1)
 	if attendance_rule:
