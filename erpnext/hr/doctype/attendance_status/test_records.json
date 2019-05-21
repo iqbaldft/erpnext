@@ -1,0 +1,22 @@
+[
+    {
+        "doctype": "Attendance Status",
+        "status_name": "Present",
+        "attendance_status": "Present"
+    },
+    {
+        "doctype": "Attendance Status",
+        "status_name": "Half Day",
+        "attendance_status": "Half Day"
+    },
+    {
+        "doctype": "Attendance Status",
+        "status_name": "On Leave",
+        "attendance_status": "On Leave"
+    },
+    {
+        "doctype": "Attendance Status",
+        "status_name": "Absent",
+        "attendance_status": "Absent"
+    }
+]
