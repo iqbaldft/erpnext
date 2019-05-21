@@ -10,6 +10,7 @@ from erpnext.hr.doctype.expense_claim.test_expense_claim import get_payable_acco
 from erpnext.hr.doctype.expense_claim.expense_claim import make_bank_entry
 from erpnext.hr.doctype.leave_application.leave_application import (get_leave_balance_on,
 	OverlapError, AttendanceAlreadyMarkedError)
+from erpnext.hr.doctype.attendance.attendance import get_default_attendance_status
 
 def work():
 	frappe.set_user(frappe.db.get_global('demo_hr_user'))
@@ -201,9 +202,9 @@ def mark_attendance():
 				and docstatus = 1""", (employee.name, attendance_date))
 
 			if leave:
-				attendance.status = "Absent"
+				attendance.status = get_default_attendance_status("Absent")
 			else:
-				attendance.status = "Present"
+				attendance.status = get_default_attendance_status("Present")
 			attendance.save()
 			attendance.submit()
 			frappe.db.commit()

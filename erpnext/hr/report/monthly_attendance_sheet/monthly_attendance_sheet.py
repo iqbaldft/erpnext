@@ -98,8 +98,9 @@ def get_columns(filters):
 	return columns
 
 def get_attendance_list(conditions, filters):
-	attendance_list = frappe.db.sql("""select employee, day(attendance_date) as day_of_month,
-		status from tabAttendance where docstatus = 1 %s order by employee, attendance_date""" %
+	attendance_list = frappe.db.sql("""select a.employee, day(a.attendance_date) as day_of_month,
+		s.attendance_status as status from `tabAttendance` a join `tabAttendance Status` s on (a.status = s.name) 
+		where a.docstatus = 1 %s order by a.employee, a.attendance_date""" %
 		conditions, filters, as_dict=1)
 
 	att_map = {}

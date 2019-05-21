@@ -10,6 +10,7 @@ from erpnext.hr.utils import set_employee_name, get_leave_period
 from erpnext.hr.doctype.leave_block_list.leave_block_list import get_applicable_block_dates
 from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee
 from erpnext.buying.doctype.supplier_scorecard.supplier_scorecard import daterange
+from erpnext.hr.doctype.attendance.attendance import get_default_attendance_status
 
 class LeaveDayBlockedError(frappe.ValidationError): pass
 class OverlapError(frappe.ValidationError): pass
@@ -124,9 +125,9 @@ class LeaveApplication(Document):
 				for d in attendance:
 					doc = frappe.get_doc("Attendance", d.name)
 					if getdate(self.half_day_date) == doc.attendance_date:
-						status = "Half Day"
+						status = get_default_attendance_status("Half Day")
 					else:
-						status = "On Leave"
+						status = get_default_attendance_status("On Leave")
 					frappe.db.sql("""update `tabAttendance` set status = %s, leave_type = %s\
 						where name = %s""",(status, self.leave_type, d.name))
 
@@ -139,15 +140,17 @@ class LeaveApplication(Document):
 					doc.attendance_date = date
 					doc.company = self.company
 					doc.leave_type = self.leave_type
-					doc.status = "Half Day" if date == self.half_day_date else "On Leave"
+					doc.status = get_default_attendance_status("Half Day") if date == self.half_day_date else get_default_attendance_status("On Leave")
 					doc.flags.ignore_validate = True
 					doc.insert(ignore_permissions=True)
 					doc.submit()
 
 	def cancel_attendance(self):
 		if self.docstatus == 2:
-			attendance = frappe.db.sql("""select name from `tabAttendance` where employee = %s\
-				and (attendance_date between %s and %s) and docstatus < 2 and status in ('On Leave', 'Half Day')""",(self.employee, self.from_date, self.to_date), as_dict=1)
+			attendance = frappe.db.sql("""select a.name from `tabAttendance` a join `tabAttendance Status` s on (a.status = s.name) 
+					where a.employee = %s\ and (a.attendance_date between %s and %s) 
+					and a.docstatus < 2 and s.attendance_status in ('On Leave', 'Half Day')""",
+				(self.employee, self.from_date, self.to_date), as_dict=1)
 			for name in attendance:
 				frappe.db.set_value("Attendance", name, "docstatus", 2)
 
@@ -258,8 +261,9 @@ class LeaveApplication(Document):
 			frappe.throw(_("Leave of type {0} cannot be longer than {1}").format(self.leave_type, max_days))
 
 	def validate_attendance(self):
-		attendance = frappe.db.sql("""select name from `tabAttendance` where employee = %s and (attendance_date between %s and %s)
-					and status = "Present" and docstatus = 1""",
+		attendance = frappe.db.sql("""select a.name from `tabAttendance` a join `tabAttendance Status` s on(a.status = s.name) 
+					where a.employee = %s and (a.attendance_date between %s and %s)
+					and s.attendance_status = "Present" and a.docstatus = 1""",
 			(self.employee, self.from_date, self.to_date))
 		if attendance:
 			frappe.throw(_("Attendance for employee {0} is already marked for this day").format(self.employee),

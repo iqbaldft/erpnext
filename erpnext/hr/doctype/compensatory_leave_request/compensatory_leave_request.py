@@ -25,10 +25,10 @@ class CompensatoryLeaveRequest(Document):
 			frappe.throw(_("Leave Type is madatory"))
 
 	def validate_attendance(self):
-		query = """select attendance_date, status
-			from `tabAttendance` where
-			attendance_date between %(work_from_date)s and %(work_end_date)s
-			and docstatus=1 and status = 'Present' and employee=%(employee)s"""
+		query = """select a.attendance_date, a.status
+			from `tabAttendance` a join `tabAttendance Status` s on (a.status = s.name) where
+			a.attendance_date between %(work_from_date)s and %(work_end_date)s
+			and a.docstatus=1 and s.attendance_status = "Present" and a.employee=%(employee)s"""
 
 		attendance = frappe.db.sql(query, {
 			"work_from_date": self.work_from_date,

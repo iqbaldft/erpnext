@@ -144,7 +144,7 @@ class Attendance(Document):
 			frappe.throw(_("Invalid attendance status"))
 
 	def set_default_attendance_status(self, attendance_status):
-		self.status = self.get_default_attendance_status(attendance_status)
+		self.status = get_default_attendance_status(attendance_status)
 	
 	def validate_attendance_status(self):
 		attendance_status = frappe.get_cached_doc("Attendance Status", self.status)
@@ -156,6 +156,37 @@ class Attendance(Document):
 	def validate_status(self):
 		if not self.status:
 			frappe.throw(_("Status must not be empty"))
+
+
+def get_default_attendance_status(attendance_status):
+	"""
+	:param attendance_status: one of "Present", "Half Day", "On Leave", or "Absent"
+
+	:return: default attendance status set on HR Settings
+	"""
+	hr_settings = frappe.get_cached_doc("HR Settings")
+	if attendance_status == "Present":
+		if hr_settings.default_present_status:
+			return hr_settings.default_present_status
+		else:
+			frappe.throw(_("Please set Default Present Status in HR Settings"))
+	elif attendance_status == "Half Day":
+		if hr_settings.default_half_day_status:
+			return hr_settings.default_half_day_status
+		else:
+			frappe.throw(_("Please set Default Half Day Status in HR Settings"))
+	elif attendance_status == "On Leave":
+		if hr_settings.default_on_leave_status:
+			return hr_settings.default_on_leave_status
+		else:
+			frappe.throw(_("Please set Default On Leave Status in HR Settings"))
+	elif attendance_status == "Absent":
+		if hr_settings.default_absent_status:
+			return hr_settings.default_absent_status
+		else:
+			frappe.throw(_("Please set Default Absent Status in HR Settings"))
+	else:
+		frappe.throw(_("Invalid attendance status. Please select one of 'Present', 'Half Day', 'On Leave', or 'Absent'"))
 
 @frappe.whitelist()
 def get_events(start, end, filters=None):

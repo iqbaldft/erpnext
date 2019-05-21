@@ -9,6 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import date_diff, add_days, getdate
 from erpnext.hr.doctype.employee.employee import is_holiday
 from erpnext.hr.utils import validate_dates
+from erpnext.hr.doctype.attendance.attendance import get_default_attendance_status
 
 class AttendanceRequest(Document):
 	def validate(self):
@@ -37,9 +38,9 @@ class AttendanceRequest(Document):
 				attendance.employee = self.employee
 				attendance.employee_name = self.employee_name
 				if self.half_day and date_diff(getdate(self.half_day_date), getdate(attendance_date)) == 0:
-					attendance.status = "Half Day"
+					attendance.status = get_default_attendance_status("Half Day")
 				else:
-					attendance.status = "Present"
+					attendance.status = get_default_attendance_status("Present")
 				attendance.attendance_date = attendance_date
 				attendance.company = self.company
 				attendance.attendance_request = self.name
